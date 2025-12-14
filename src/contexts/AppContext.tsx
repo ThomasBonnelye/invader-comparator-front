@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { fetchPlayers } from '../api/players';
 import { fetchPlayerData, type PlayerData } from '../api/spaceInvaders';
 
@@ -341,4 +341,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       {children}
     </AppContext.Provider>
   );
+}
+
+export function useAppContext() {
+  const context = useContext(AppContext);
+  
+  if (!context) {
+    throw new Error(
+        'useAppContext must be used within an AppProvider'
+    );
+  }
+  
+  return context;
 }
