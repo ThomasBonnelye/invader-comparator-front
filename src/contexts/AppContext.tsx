@@ -76,6 +76,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [playersMap, setPlayersMap] = useState<Record<string, PlayerData>>({});
 
   const [selectedFirst, setSelectedFirst] = useState('');
+  const [selectedSeconds, setSelectedSeconds] = useState<string[]>([]);
+  const [search, setSearch] = useState('');
 
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
@@ -283,4 +285,60 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setMessage('');
     }, 5000);
   };
+
+  const contextValue = useMemo<AppContextType>(() => ({
+    authenticated,
+    user,
+    loginWithGoogle,
+    logout,
+    
+    myUid,
+    othersUids,
+    newUid,
+    setMyUid,
+    setNewUid,
+    updateMyUid,
+    addOtherUid,
+    removeOtherUid,
+    
+    uids,
+    playersMap,
+    firstOptions,
+    secondOptions,
+    
+    selectedFirst,
+    selectedSeconds,
+    search,
+    setSelectedFirst,
+    setSelectedSeconds,
+    setSearch,
+    
+    showSettings,
+    setShowSettings,
+    message,
+    messageType,
+    showMessage,
+  }), [
+    authenticated,
+    user,
+    myUid,
+    othersUids,
+    newUid,
+    uids,
+    playersMap,
+    firstOptions,
+    secondOptions,
+    selectedFirst,
+    selectedSeconds,
+    search,
+    showSettings,
+    message,
+    messageType,
+  ]);
+
+  return (
+    <AppContext.Provider value={contextValue}>
+      {children}
+    </AppContext.Provider>
+  );
 }
