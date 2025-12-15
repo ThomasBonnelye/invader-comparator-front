@@ -14,7 +14,7 @@ import {
 import { useAppContext } from '../contexts/AppContext';
 import { compareInvaders } from '../utils/compareInvaders';
 
-export default function DataTable() {
+const DataTable = React.memo(function DataTable() {
   const { selectedFirst, selectedSeconds, search, playersMap } = useAppContext();
   const [loading, setLoading] = React.useState(false);
   const [data, setData] = React.useState<Record<string, string[]>>({});
@@ -78,7 +78,9 @@ export default function DataTable() {
     );
   }
 
-  const maxRows = Math.max(...Object.values(filteredData).map((arr) => arr.length));
+  const maxRows = React.useMemo(() => {
+    return Math.max(...Object.values(filteredData).map((arr) => arr.length));
+  }, [filteredData]);
 
   return (
     <TableContainer component={Paper}>
@@ -109,4 +111,6 @@ export default function DataTable() {
       </Table>
     </TableContainer>
   );
-}
+});
+
+export default DataTable;

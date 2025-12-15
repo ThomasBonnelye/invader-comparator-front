@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Paper,
   Box,
@@ -11,7 +12,7 @@ import {
 } from '@mui/material';
 import { useAppContext } from '../contexts/AppContext';
 
-export default function FilterPanel() {
+const FilterPanel = React.memo(function FilterPanel() {
   const {
     firstOptions,
     secondOptions,
@@ -23,10 +24,10 @@ export default function FilterPanel() {
     setSearch,
   } = useAppContext();
 
-  const handleSecondsChange = (event: SelectChangeEvent<typeof selectedSeconds>) => {
+  const handleSecondsChange = React.useCallback((event: SelectChangeEvent<typeof selectedSeconds>) => {
     const value = event.target.value;
     setSelectedSeconds(typeof value === 'string' ? value.split(',') : value);
-  };
+  }, [setSelectedSeconds]);
 
   return (
     <Paper sx={{ p: 3, mb: 3 }}>
@@ -82,4 +83,6 @@ export default function FilterPanel() {
       </Box>
     </Paper>
   );
-}
+});
+
+export default FilterPanel;

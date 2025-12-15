@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { fetchPlayers } from '../api/players';
 import { fetchPlayerData, type PlayerData } from '../api/spaceInvaders';
 
@@ -83,6 +83,58 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
   const [showSettings, setShowSettings] = useState(false);
 
+  // UI state management
+  const showMessage = useCallback((text: string, type: 'success' | 'error') => {
+    setMessage(text);
+    setMessageType(type);
+    
+    setTimeout(() => {
+      setMessage('');
+    }, 5000);
+  }, []);
+
+  // async functions for UIDs and players loading
+  const loadUids = useCallback(async () => {
+    try {
+      const response = await fetch('/api/uids', {
+        credentials: 'include',
+      });
+      const data = await response.json();
+      
+      setMyUid(data.myUid);
+      setOthersUids(data.othersUids);
+    } catch (error) {
+      console.error('Failed to load UIDs:', error);
+      showMessage('Failed to load UIDs', 'error');
+    }
+  }, [showMessage]);
+
+  // async function to load players data
+  const loadPlayers = useCallback(async () => {
+    try {
+      const playersData = await fetchPlayers();
+      const uidsArray = playersData.map((p) => p.value);
+      setUids(uidsArray);
+
+      const newPlayersMap: Record<string, PlayerData> = {};
+      
+      for (const uid of uidsArray) {
+        try {
+          const data = await fetchPlayerData(uid);
+          newPlayersMap[uid] = data;
+        } catch (e) {
+          console.error('Player fetch failed:', e);
+          newPlayersMap[uid] = { player: uid, invaders: [] };
+        }
+      }
+      
+      setPlayersMap(newPlayersMap);
+    } catch (error) {
+      console.error('Players loading failed:', error);
+      setUids([]);
+    }
+  }, []);
+
   // async functions for authentication
   useEffect(() => {
     const checkAuth = async () => {
@@ -106,15 +158,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
 
     checkAuth();
-  }, []);
+  }, [loadUids, loadPlayers]);
 
   // google login redirection
-  const loginWithGoogle = () => {
+  const loginWithGoogle = useCallback(() => {
     window.location.href = '/api/auth/google';
-  };
+  }, []);
 
   // logout function
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await fetch('/api/auth/logout', {
         method: 'POST',
@@ -131,26 +183,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.error('Logout failed:', error);
       showMessage('Logout failed', 'error');
     }
-  };
-
-  // async functions for UIDs and players loading
-  const loadUids = async () => {
-    try {
-      const response = await fetch('/api/uids', {
-        credentials: 'include',
-      });
-      const data = await response.json();
-      
-      setMyUid(data.myUid);
-      setOthersUids(data.othersUids);
-    } catch (error) {
-      console.error('Failed to load UIDs:', error);
-      showMessage('Failed to load UIDs', 'error');
-    }
-  };
+  }, [showMessage]);
 
   // async function to update my UID
-  const updateMyUid = async () => {
+  const updateMyUid = useCallback(async () => {
     try {
       const response = await fetch('/api/uids/my-uid', {
         method: 'PUT',
@@ -171,10 +207,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.error('UID update failed:', error);
       showMessage('Failed to update UID', 'error');
     }
-  };
+  }, [myUid, showMessage, loadPlayers]);
 
   // async function to add an other UID
-  const addOtherUid = async () => {
+  const addOtherUid = useCallback(async () => {
     if (!newUid.trim()) {
       showMessage('Please enter a valid UID', 'error');
       return;
@@ -203,14 +239,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.error('UID addition failed:', error);
       showMessage('Failed to add UID', 'error');
     }
-  };
+  }, [newUid, showMessage, loadPlayers]);
 
   /**
    * async function to remove an other UID
    * 
    * @param uid - UID to remove
    */
-  const removeOtherUid = async (uid: string) => {
+  const removeOtherUid = useCallback(async (uid: string) => {
     try {
       const response = await fetch(
         `/api/uids/others-uids/${encodeURIComponent(uid)}`,
@@ -232,33 +268,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.error('UID removal failed:', error);
       showMessage('Failed to remove UID', 'error');
     }
-  };
-
-  // async function to load players data
-  const loadPlayers = async () => {
-    try {
-      const playersData = await fetchPlayers();
-      const uidsArray = playersData.map((p) => p.value);
-      setUids(uidsArray);
-
-      const newPlayersMap: Record<string, PlayerData> = {};
-      
-      for (const uid of uidsArray) {
-        try {
-          const data = await fetchPlayerData(uid);
-          newPlayersMap[uid] = data;
-        } catch (e) {
-          console.error('Player fetch failed:', e);
-          newPlayersMap[uid] = { player: uid, invaders: [] };
-        }
-      }
-      
-      setPlayersMap(newPlayersMap);
-    } catch (error) {
-      console.error('Players loading failed:', error);
-      setUids([]);
-    }
-  };
+  }, [showMessage, loadPlayers]);
 
   const firstOptions = useMemo(() => {
     return uids.map((uid) => ({
@@ -275,16 +285,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         value: uid,
       }));
   }, [uids, playersMap, selectedFirst]);
-
-  // UI state management
-  const showMessage = (text: string, type: 'success' | 'error') => {
-    setMessage(text);
-    setMessageType(type);
-    
-    setTimeout(() => {
-      setMessage('');
-    }, 5000);
-  };
 
   const contextValue = useMemo<AppContextType>(() => ({
     authenticated,

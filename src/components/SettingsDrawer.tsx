@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Drawer,
   Box,
@@ -15,7 +16,7 @@ import {
 } from '@mui/icons-material';
 import { useAppContext } from '../contexts/AppContext';
 
-export default function SettingsDrawer() {
+const SettingsDrawer = React.memo(function SettingsDrawer() {
   const {
     showSettings,
     setShowSettings,
@@ -97,4 +98,6 @@ export default function SettingsDrawer() {
       </Box>
     </Drawer>
   );
-}
+});
+
+export default SettingsDrawer;

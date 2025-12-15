@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   AppBar,
   Toolbar,
@@ -9,7 +10,7 @@ import {
 import { Settings as SettingsIcon } from '@mui/icons-material';
 import { useAppContext } from '../contexts/AppContext';
 
-export default function Header() {
+const Header = React.memo(function Header() {
   const { authenticated, user, loginWithGoogle, logout, showSettings, setShowSettings } = useAppContext();
 
   return (
@@ -37,4 +38,6 @@ export default function Header() {
       </Toolbar>
     </AppBar>
   );
-}
+});
+
+export default Header;
