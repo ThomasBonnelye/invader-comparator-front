@@ -58,6 +58,10 @@ const DataTable = React.memo(function DataTable() {
     return result;
   }, [data, search]);
 
+  const maxRows = React.useMemo(() => {
+    return Math.max(...Object.values(filteredData).map((arr) => arr.length));
+  }, [filteredData]);
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
@@ -77,10 +81,6 @@ const DataTable = React.memo(function DataTable() {
       </Paper>
     );
   }
-
-  const maxRows = React.useMemo(() => {
-    return Math.max(...Object.values(filteredData).map((arr) => arr.length));
-  }, [filteredData]);
 
   return (
     <TableContainer component={Paper}>
