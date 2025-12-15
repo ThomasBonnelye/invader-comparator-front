@@ -7,11 +7,11 @@ import {
   Box,
   IconButton,
 } from '@mui/material';
-import { Settings as SettingsIcon } from '@mui/icons-material';
+import { Settings as SettingsIcon, Brightness4, Brightness7 } from '@mui/icons-material';
 import { useAppContext } from '../contexts/AppContext';
 
 const Header = React.memo(function Header() {
-  const { authenticated, user, loginWithGoogle, logout, showSettings, setShowSettings } = useAppContext();
+  const { authenticated, user, loginWithGoogle, logout, showSettings, setShowSettings, themeMode, toggleTheme } = useAppContext();
 
   return (
     <AppBar position="static" color="transparent">
@@ -20,21 +20,27 @@ const Header = React.memo(function Header() {
           Invader Comparator
         </Typography>
 
-        {!authenticated ? (
-          <Button color="inherit" onClick={loginWithGoogle}>
-            Sign in with Google
-          </Button>
-        ) : (
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-            <Typography>{user?.name}</Typography>
-            <IconButton color="inherit" onClick={() => setShowSettings(true)}>
-              <SettingsIcon />
-            </IconButton>
-            <Button color="inherit" onClick={logout}>
-              Logout
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <IconButton color="inherit" onClick={toggleTheme}>
+            {themeMode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+          </IconButton>
+
+          {!authenticated ? (
+            <Button color="inherit" onClick={loginWithGoogle}>
+              Sign in with Google
             </Button>
-          </Box>
-        )}
+          ) : (
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <Typography>{user?.name}</Typography>
+              <IconButton color="inherit" onClick={() => setShowSettings(true)}>
+                <SettingsIcon />
+              </IconButton>
+              <Button color="inherit" onClick={logout}>
+                Logout
+              </Button>
+            </Box>
+          )}
+        </Box>
       </Toolbar>
     </AppBar>
   );
