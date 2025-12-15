@@ -143,6 +143,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
           credentials: 'include',
         });
         
+        // Check if response is OK before parsing JSON
+        if (!response.ok) {
+          console.log('Not authenticated or server error');
+          return;
+        }
+
         const data = await response.json();
 
         if (data.authenticated) {
