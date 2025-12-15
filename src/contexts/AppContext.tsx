@@ -60,6 +60,10 @@ interface AppContextType {
   message: string;
   messageType: 'success' | 'error';
   showMessage: (text: string, type: 'success' | 'error') => void;
+  
+  // THEME
+  themeMode: 'light' | 'dark';
+  toggleTheme: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -82,6 +86,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
   const [showSettings, setShowSettings] = useState(false);
+  
+  // Theme mode state with localStorage persistence
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
+    const savedMode = localStorage.getItem('themeMode');
+    return (savedMode === 'dark' || savedMode === 'light') ? savedMode : 'light';
+  });
 
   // UI state management
   const showMessage = useCallback((text: string, type: 'success' | 'error') => {
@@ -91,6 +101,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTimeout(() => {
       setMessage('');
     }, 5000);
+  }, []);
+
+  // Theme toggle function
+  const toggleTheme = useCallback(() => {
+    setThemeMode((prevMode) => {
+      const newMode = prevMode === 'light' ? 'dark' : 'light';
+      localStorage.setItem('themeMode', newMode);
+      return newMode;
+    });
   }, []);
 
   // async functions for UIDs and players loading
@@ -324,6 +343,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     message,
     messageType,
     showMessage,
+    
+    themeMode,
+    toggleTheme,
   }), [
     authenticated,
     user,
@@ -340,6 +362,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     showSettings,
     message,
     messageType,
+    themeMode,
+    toggleTheme,
   ]);
 
   return (

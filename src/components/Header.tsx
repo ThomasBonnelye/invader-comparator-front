@@ -14,7 +14,7 @@ const Header = React.memo(function Header() {
   const { authenticated, user, loginWithGoogle, logout, showSettings, setShowSettings } = useAppContext();
 
   return (
-    <AppBar position="static">
+    <AppBar position="static" color="transparent">
       <Toolbar>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           Invader Comparator

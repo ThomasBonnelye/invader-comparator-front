@@ -3,18 +3,24 @@ import {
   Box,
   Snackbar,
   Alert,
+  ThemeProvider,
+  CssBaseline,
 } from '@mui/material';
 import { AppProvider, useAppContext } from './contexts/AppContext';
+import { getTheme } from './theme';
 import Header from './components/Header';
 import SettingsDrawer from './components/SettingsDrawer';
 import FilterPanel from './components/FilterPanel';
 import DataTable from './components/DataTable';
 
 function AppContent() {
-  const { message, messageType } = useAppContext();
+  const { message, messageType, themeMode } = useAppContext();
+  const theme = getTheme(themeMode);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <Header />
       <SettingsDrawer />
 
@@ -23,12 +29,13 @@ function AppContent() {
         <DataTable />
       </Container>
 
-      <Snackbar open={!!message} autoHideDuration={5000}>
-        <Alert severity={messageType} sx={{ width: '100%' }}>
-          {message}
-        </Alert>
-      </Snackbar>
-    </Box>
+        <Snackbar open={!!message} autoHideDuration={5000}>
+          <Alert severity={messageType} sx={{ width: '100%' }}>
+            {message}
+          </Alert>
+        </Snackbar>
+      </Box>
+    </ThemeProvider>
   );
 }
 
