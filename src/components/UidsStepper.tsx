@@ -13,7 +13,7 @@ import {
   Stack
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
-import { useAppContext } from '../contexts/AppContext';
+import { useAppContext } from '../contexts';
 
 const steps = [
   'Votre UID',
@@ -150,8 +150,8 @@ const UidsStepper = React.memo(function UidsStepper() {
             </Button>
             <Box sx={{ flex: '1 1 auto' }} />
             {activeStep === 0 && (
-              <Button onClick={handleNext} loading={isUpdating} disabled={isUpdating}>
-                Suivant
+              <Button onClick={handleNext} disabled={isUpdating}>
+                {isUpdating ? 'Mise à jour...' : 'Suivant'}
               </Button>
             )}
           </Box>
