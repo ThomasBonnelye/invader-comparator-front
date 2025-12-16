@@ -71,8 +71,7 @@ app/
 
 The application uses React Router for navigation:
 
-- `/` - Landing page
-- `/home` - Home page
+- `/` - Home page
 - `/comparator` - Comparator page
 
 ## Key Components
