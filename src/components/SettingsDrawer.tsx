@@ -14,7 +14,7 @@ import {
   Close as CloseIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { useAppContext } from '../contexts/AppContext';
+import { useAppContext } from '../contexts';
 
 const SettingsDrawer = React.memo(function SettingsDrawer() {
   const {

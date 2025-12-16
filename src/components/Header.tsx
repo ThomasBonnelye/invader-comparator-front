@@ -8,7 +8,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { Settings as SettingsIcon, Brightness4, Brightness7 } from '@mui/icons-material';
-import { useAppContext } from '../contexts/AppContext';
+import { useAppContext } from '../contexts';
 
 const Header = React.memo(function Header() {
   const { authenticated, user, loginWithGoogle, logout, showSettings, setShowSettings, themeMode, toggleTheme } = useAppContext();

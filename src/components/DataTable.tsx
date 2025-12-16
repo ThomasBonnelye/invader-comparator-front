@@ -11,7 +11,7 @@ import {
   TableRow,
   CircularProgress,
 } from '@mui/material';
-import { useAppContext } from '../contexts/AppContext';
+import { useAppContext } from '../contexts';
 import { compareInvaders } from '../utils/compareInvaders';
 
 const DataTable = React.memo(function DataTable() {

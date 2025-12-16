@@ -6,7 +6,7 @@ import {
   ThemeProvider,
   CssBaseline,
 } from '@mui/material';
-import { AppProvider, useAppContext } from './contexts/AppContext';
+import { AppProvider, useAppContext } from './contexts';
 import { getTheme } from './theme';
 import Header from './components/Header';
 import SettingsDrawer from './components/SettingsDrawer';
