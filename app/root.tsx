@@ -6,12 +6,11 @@ import {
   ThemeProvider,
   CssBaseline,
 } from '@mui/material';
-import { AppProvider, useAppContext } from './contexts';
-import { getTheme } from './theme';
-import Header from './components/Header';
-import SettingsDrawer from './components/SettingsDrawer';
-import FilterPanel from './components/FilterPanel';
-import DataTable from './components/DataTable';
+import { AppProvider, useAppContext } from '../src/contexts';
+import { getTheme } from '../src/theme';
+import Header from '../src/components/Header';
+import SettingsDrawer from '../src/components/SettingsDrawer';
+import { Outlet } from 'react-router';
 
 function AppContent() {
   const { message, messageType, themeMode } = useAppContext();
@@ -25,8 +24,7 @@ function AppContent() {
       <SettingsDrawer />
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <FilterPanel />
-        <DataTable />
+        <Outlet />
       </Container>
 
         <Snackbar open={!!message} autoHideDuration={5000}>
@@ -39,7 +37,7 @@ function AppContent() {
   );
 }
 
-export default function App() {
+export default function Root() {
   return (
     <AppProvider>
       <AppContent />
