@@ -1,9 +1,11 @@
-import React from 'react';
+import DataTable from '../components/DataTable';
+import FilterPanel from '../components/FilterPanel';
 
 export default function Comparator() {
   return (
-    <div>
-      <h1>Comparator Page</h1>
-    </div>
+    <>
+      <FilterPanel />
+      <DataTable /> 
+    </>
   );
 }
