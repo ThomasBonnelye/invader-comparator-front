@@ -1,7 +1,9 @@
 import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
 import { fetchPlayers } from '../api/players';
 import { fetchPlayerData, type PlayerData } from '../api/spaceInvaders';
-import { PlayersContextType, Option } from './types';
+import { PlayersContextType } from './types';
+import { useAuth } from './AuthContext';
+import { GUEST_MY_UID_KEY, GUEST_OTHERS_UIDS_KEY } from './AuthContext';
 
 const PlayersContext = createContext<PlayersContextType | undefined>(undefined);
 
@@ -12,27 +14,39 @@ export function PlayersProvider({
   children: ReactNode;
   showMessage?: (text: string, type: 'success' | 'error') => void;
 }) {
+  const { authStatus } = useAuth();
   const [myUid, setMyUid] = useState('');
   const [othersUids, setOthersUids] = useState<string[]>([]);
   const [newUid, setNewUid] = useState('');
   const [uids, setUids] = useState<string[]>([]);
   const [playersMap, setPlayersMap] = useState<Record<string, PlayerData>>({});
 
-  // Load UIDs from API
+  // Load UIDs from localStorage (guest) or API (connected)
   const loadUids = useCallback(async () => {
     try {
-      const response = await fetch('/api/uids', {
-        credentials: 'include',
-      });
-      const data = await response.json();
-      
-      setMyUid(data.myUid);
-      setOthersUids(data.othersUids);
+      if (authStatus === 'GUEST') {
+        // Load from localStorage
+        const myUidLocal = localStorage.getItem(GUEST_MY_UID_KEY) || '';
+        const othersUidsStr = localStorage.getItem(GUEST_OTHERS_UIDS_KEY);
+        const othersUidsLocal = othersUidsStr ? JSON.parse(othersUidsStr) : [];
+        
+        setMyUid(myUidLocal);
+        setOthersUids(othersUidsLocal);
+      } else if (authStatus === 'CONNECTED') {
+        // Load from API
+        const response = await fetch('/api/uids', {
+          credentials: 'include',
+        });
+        const data = await response.json();
+        
+        setMyUid(data.myUid);
+        setOthersUids(data.othersUids);
+      }
     } catch (error) {
       console.error('Failed to load UIDs:', error);
       showMessage?.('Failed to load UIDs', 'error');
     }
-  }, [showMessage]);
+  }, [authStatus, showMessage]);
 
   // Load players data
   const loadPlayers = useCallback(async () => {
@@ -63,26 +77,34 @@ export function PlayersProvider({
   // Update my UID
   const updateMyUid = useCallback(async () => {
     try {
-      const response = await fetch('/api/uids/my-uid', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ uid: myUid }),
-      });
-
-      if (response.ok) {
+      if (authStatus === 'GUEST') {
+        // Save to localStorage
+        localStorage.setItem(GUEST_MY_UID_KEY, myUid);
         showMessage?.('UID updated successfully', 'success');
         await loadPlayers();
-      } else {
-        showMessage?.('Failed to update UID', 'error');
+      } else if (authStatus === 'CONNECTED') {
+        // Save to API
+        const response = await fetch('/api/uids/my-uid', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ uid: myUid }),
+        });
+
+        if (response.ok) {
+          showMessage?.('UID updated successfully', 'success');
+          await loadPlayers();
+        } else {
+          showMessage?.('Failed to update UID', 'error');
+        }
       }
     } catch (error) {
       console.error('UID update failed:', error);
       showMessage?.('Failed to update UID', 'error');
     }
-  }, [myUid, showMessage, loadPlayers]);
+  }, [authStatus, myUid, showMessage, loadPlayers]);
 
   // Add other UID
   const addOtherUid = useCallback(async () => {
@@ -92,54 +114,75 @@ export function PlayersProvider({
     }
 
     try {
-      const response = await fetch('/api/uids/others-uids', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ uid: newUid }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setOthersUids(data.othersUids);
+      if (authStatus === 'GUEST') {
+        // Save to localStorage
+        const updatedOthersUids = [...othersUids, newUid];
+        localStorage.setItem(GUEST_OTHERS_UIDS_KEY, JSON.stringify(updatedOthersUids));
+        setOthersUids(updatedOthersUids);
         setNewUid('');
         showMessage?.('UID added successfully', 'success');
         await loadPlayers();
-      } else {
-        showMessage?.('Failed to add UID', 'error');
+      } else if (authStatus === 'CONNECTED') {
+        // Save to API
+        const response = await fetch('/api/uids/others-uids', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ uid: newUid }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setOthersUids(data.othersUids);
+          setNewUid('');
+          showMessage?.('UID added successfully', 'success');
+          await loadPlayers();
+        } else {
+          showMessage?.('Failed to add UID', 'error');
+        }
       }
     } catch (error) {
       console.error('UID addition failed:', error);
       showMessage?.('Failed to add UID', 'error');
     }
-  }, [newUid, showMessage, loadPlayers]);
+  }, [authStatus, newUid, othersUids, showMessage, loadPlayers]);
 
   // Remove other UID
   const removeOtherUid = useCallback(async (uid: string) => {
     try {
-      const response = await fetch(
-        `/api/uids/others-uids/${encodeURIComponent(uid)}`,
-        {
-          method: 'DELETE',
-          credentials: 'include',
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setOthersUids(data.othersUids);
+      if (authStatus === 'GUEST') {
+        // Remove from localStorage
+        const updatedOthersUids = othersUids.filter((u) => u !== uid);
+        localStorage.setItem(GUEST_OTHERS_UIDS_KEY, JSON.stringify(updatedOthersUids));
+        setOthersUids(updatedOthersUids);
         showMessage?.('UID removed successfully', 'success');
         await loadPlayers();
-      } else {
-        showMessage?.('Failed to remove UID', 'error');
+      } else if (authStatus === 'CONNECTED') {
+        // Remove from API
+        const response = await fetch(
+          `/api/uids/others-uids/${encodeURIComponent(uid)}`,
+          {
+            method: 'DELETE',
+            credentials: 'include',
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setOthersUids(data.othersUids);
+          showMessage?.('UID removed successfully', 'success');
+          await loadPlayers();
+        } else {
+          showMessage?.('Failed to remove UID', 'error');
+        }
       }
     } catch (error) {
       console.error('UID removal failed:', error);
       showMessage?.('Failed to remove UID', 'error');
     }
-  }, [showMessage, loadPlayers]);
+  }, [authStatus, othersUids, showMessage, loadPlayers]);
 
   // Memoized first options
   const firstOptions = useMemo(() => {

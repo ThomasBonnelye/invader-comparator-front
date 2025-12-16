@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   AppBar,
   Toolbar,
@@ -6,12 +6,30 @@ import {
   Button,
   Box,
   IconButton,
-} from '@mui/material';
-import { Settings as SettingsIcon, Brightness4, Brightness7 } from '@mui/icons-material';
-import { useAppContext } from '../contexts';
+  Chip,
+} from "@mui/material";
+import {
+  Settings as SettingsIcon,
+  Brightness4,
+  Brightness7,
+} from "@mui/icons-material";
+import { useAppContext } from "../contexts";
 
 const Header = React.memo(function Header() {
-  const { authenticated, user, loginWithGoogle, logout, showSettings, setShowSettings, themeMode, toggleTheme } = useAppContext();
+  const {
+    authStatus,
+    user,
+    loginWithGoogle,
+    logout,
+    setShowSettings,
+    themeMode,
+    toggleTheme,
+  } = useAppContext();
+
+  const handleLoginFromGuest = async () => {
+    // Initiate login - migration will happen automatically in AuthContext
+    loginWithGoogle();
+  };
 
   return (
     <AppBar position="static" color="transparent">
@@ -20,23 +38,33 @@ const Header = React.memo(function Header() {
           Invader Comparator
         </Typography>
 
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          <IconButton color="inherit" onClick={toggleTheme}>
-            {themeMode === 'dark' ? <Brightness7 /> : <Brightness4 />}
-          </IconButton>
-
-          {!authenticated ? (
-            <Button color="inherit" onClick={loginWithGoogle}>
-              Sign in with Google
-            </Button>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+          {authStatus === null ? (
+            <IconButton color="inherit" onClick={toggleTheme}>
+              {themeMode === "dark" ? <Brightness7 /> : <Brightness4 />}
+            </IconButton>
+          ) : authStatus === "GUEST" ? (
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+              <Chip label="Mode Invité" size="small" color="default" />
+              <Button
+                color="inherit"
+                variant="outlined"
+                onClick={handleLoginFromGuest}
+              >
+                Se connecter
+              </Button>
+              <IconButton color="inherit" onClick={() => setShowSettings(true)}>
+                <SettingsIcon />
+              </IconButton>
+            </Box>
           ) : (
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
               <Typography>{user?.name}</Typography>
               <IconButton color="inherit" onClick={() => setShowSettings(true)}>
                 <SettingsIcon />
               </IconButton>
               <Button color="inherit" onClick={logout}>
-                Logout
+                Déconnexion
               </Button>
             </Box>
           )}

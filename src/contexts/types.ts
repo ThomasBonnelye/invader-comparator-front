@@ -18,13 +18,21 @@ export interface Option {
 }
 
 /**
+ * Auth status type
+ */
+export type AuthStatus = 'CONNECTED' | 'GUEST' | null;
+
+/**
  * Authentication Context Type
  */
 export interface AuthContextType {
-  authenticated: boolean;
+  authStatus: AuthStatus;
   user: User | null;
+
+  continueAsGuest: () => void;
   loginWithGoogle: () => void;
   logout: () => Promise<void>;
+  migrateGuestData: () => Promise<void>;
 }
 
 /**

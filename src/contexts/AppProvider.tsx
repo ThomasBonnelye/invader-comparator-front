@@ -5,18 +5,18 @@ import { FilterProvider } from './FilterContext';
 import { PlayersProvider, usePlayers } from './PlayersContext';
 
 /**
- * Component that handles loading data when authenticated
+ * Component that handles loading data when authenticated or in guest mode
  */
 function DataLoaderEffect() {
-  const { authenticated } = useAuth();
+  const { authStatus } = useAuth();
   const { loadUids, loadPlayers } = usePlayers();
   
   useEffect(() => {
-    if (authenticated) {
+    if (authStatus === 'CONNECTED' || authStatus === 'GUEST') {
       loadUids();
       loadPlayers();
     }
-  }, [authenticated, loadUids, loadPlayers]);
+  }, [authStatus, loadUids, loadPlayers]);
   
   return null;
 }

@@ -1,17 +1,22 @@
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
-import { AuthContextType, User } from './types';
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode, useRef } from 'react';
+import { AuthContextType, User, AuthStatus } from './types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// LocalStorage keys
+export const GUEST_MY_UID_KEY = 'guest_myUid';
+export const GUEST_OTHERS_UIDS_KEY = 'guest_othersUids';
 
 export function AuthProvider({ 
   children,
   onAuthChange 
 }: { 
   children: ReactNode;
-  onAuthChange?: (authenticated: boolean) => void;
+  onAuthChange?: (authStatus: AuthStatus) => void;
 }) {
-  const [authenticated, setAuthenticated] = useState(false);
+  const authStatusRef = useRef<AuthStatus>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [, forceUpdate] = useState({});
 
   // Check authentication status
   useEffect(() => {
@@ -29,9 +34,23 @@ export function AuthProvider({
         const data = await response.json();
 
         if (data.authenticated) {
-          setAuthenticated(true);
+          authStatusRef.current = 'CONNECTED';
           setUser(data.user);
-          onAuthChange?.(true);
+          
+          // Check if there's guest data to migrate
+          const hasGuestData = localStorage.getItem(GUEST_MY_UID_KEY) || localStorage.getItem(GUEST_OTHERS_UIDS_KEY);
+          if (hasGuestData) {
+            console.log('Guest data detected, migrating...');
+            try {
+              await migrateGuestDataInternal();
+              console.log('Guest data migrated successfully');
+            } catch (error) {
+              console.error('Failed to migrate guest data:', error);
+            }
+          }
+          
+          onAuthChange?.('CONNECTED');
+          forceUpdate({});
         }
       } catch (error) {
         console.error('Authentication check failed:', error);
@@ -41,9 +60,63 @@ export function AuthProvider({
     checkAuth();
   }, [onAuthChange]);
 
+  // Internal migration function (doesn't check authStatus)
+  const migrateGuestDataInternal = async () => {
+    try {
+      const myUid = localStorage.getItem(GUEST_MY_UID_KEY);
+      const othersUidsStr = localStorage.getItem(GUEST_OTHERS_UIDS_KEY);
+      const othersUids = othersUidsStr ? JSON.parse(othersUidsStr) : [];
+
+      // Send guest data to API
+      if (myUid) {
+        await fetch('/api/uids/my-uid', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ uid: myUid }),
+        });
+      }
+
+      // Add other UIDs
+      for (const uid of othersUids) {
+        await fetch('/api/uids/others-uids', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ uid }),
+        });
+      }
+
+      // Clear localStorage
+      localStorage.removeItem(GUEST_MY_UID_KEY);
+      localStorage.removeItem(GUEST_OTHERS_UIDS_KEY);
+    } catch (error) {
+      console.error('Failed to migrate guest data:', error);
+      throw error;
+    }
+  };
+
+  // Continue as guest
+  const continueAsGuest = useCallback(() => {
+    authStatusRef.current = 'GUEST';
+    onAuthChange?.('GUEST');
+    forceUpdate({});
+  }, [onAuthChange]);
+
   // Google login redirection
   const loginWithGoogle = useCallback(() => {
     window.location.href = '/api/auth/google';
+  }, []);
+
+  // Migrate guest data to connected user (public API)
+  const migrateGuestData = useCallback(async () => {
+    if (authStatusRef.current !== 'CONNECTED') {
+      console.warn('Cannot migrate guest data: user is not connected');
+      return;
+    }
+
+    await migrateGuestDataInternal();
+    console.log('Guest data migrated successfully');
   }, []);
 
   // Logout function
@@ -54,9 +127,10 @@ export function AuthProvider({
         credentials: 'include',
       });
       
-      setAuthenticated(false);
+      authStatusRef.current = null;
       setUser(null);
-      onAuthChange?.(false);
+      onAuthChange?.(null);
+      forceUpdate({});
     } catch (error) {
       console.error('Logout failed:', error);
       throw error;
@@ -65,10 +139,12 @@ export function AuthProvider({
 
   return (
     <AuthContext.Provider value={{
-      authenticated,
+      authStatus: authStatusRef.current,
       user,
+      continueAsGuest,
       loginWithGoogle,
       logout,
+      migrateGuestData,
     }}>
       {children}
     </AuthContext.Provider>

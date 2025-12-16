@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { UidsState, UidsActions } from '../types';
-import type { PlayerData } from '../api/spaceInvaders';
 
 interface UseUidsReturn extends UidsState, UidsActions {
   loadUids: () => Promise<void>;
@@ -108,7 +107,7 @@ export function useUids(
     }
   }, [showMessage, loadPlayers]);
 
-  const setUidsList = useCallback((uids: string[], others: string[]) => {
+  const setUidsList = useCallback((_uids: string[], _others: string[]) => {
     // This method can be used to set both lists at once
     // For now, we'll let the context handle the coordination
   }, []);
