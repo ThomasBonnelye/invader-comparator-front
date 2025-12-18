@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 import { UIContextType } from './types';
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
@@ -7,7 +7,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [showSettings, setShowSettings] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
-  
+
   // Theme mode state with localStorage persistence
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
     const savedMode = localStorage.getItem('themeMode');
@@ -15,23 +15,23 @@ export function UIProvider({ children }: { children: ReactNode }) {
   });
 
   // Show message function
-  const showMessage = useCallback((text: string, type: 'success' | 'error') => {
+  const showMessage = (text: string, type: 'success' | 'error') => {
     setMessage(text);
     setMessageType(type);
-    
+
     setTimeout(() => {
       setMessage('');
     }, 5000);
-  }, []);
+  };
 
   // Theme toggle function
-  const toggleTheme = useCallback(() => {
+  const toggleTheme = () => {
     setThemeMode((prevMode) => {
       const newMode = prevMode === 'light' ? 'dark' : 'light';
       localStorage.setItem('themeMode', newMode);
       return newMode;
     });
-  }, []);
+  };
 
   return (
     <UIContext.Provider value={{

@@ -14,12 +14,11 @@ import {
   Close as CloseIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { useAppContext } from '../contexts';
+import { useUI, usePlayers } from '../contexts';
 
 const SettingsDrawer = React.memo(function SettingsDrawer() {
+  const { showSettings, setShowSettings } = useUI();
   const {
-    showSettings,
-    setShowSettings,
     myUid,
     setMyUid,
     othersUids,
@@ -28,7 +27,7 @@ const SettingsDrawer = React.memo(function SettingsDrawer() {
     updateMyUid,
     addOtherUid,
     removeOtherUid,
-  } = useAppContext();
+  } = usePlayers();
 
   return (
     <Drawer
@@ -56,7 +55,7 @@ const SettingsDrawer = React.memo(function SettingsDrawer() {
             placeholder="627F176F-54C3-4D32-90EF-C4C80462A2C3"
             sx={{ mb: 2 }}
           />
-          <Button variant="contained" onClick={updateMyUid}>
+          <Button variant="contained" onClick={() => updateMyUid()}>
             Save my UID
           </Button>
         </Box>

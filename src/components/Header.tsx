@@ -13,18 +13,11 @@ import {
   Brightness4,
   Brightness7,
 } from "@mui/icons-material";
-import { useAppContext } from "../contexts";
+import { useUI, useAuth } from "../contexts";
 
 const Header = React.memo(function Header() {
-  const {
-    authStatus,
-    user,
-    loginWithGoogle,
-    logout,
-    setShowSettings,
-    themeMode,
-    toggleTheme,
-  } = useAppContext();
+  const { authStatus, user, loginWithGoogle, logout } = useAuth();
+  const { setShowSettings, themeMode, toggleTheme } = useUI();
 
   const handleLoginFromGuest = async () => {
     // Initiate login - migration will happen automatically in AuthContext

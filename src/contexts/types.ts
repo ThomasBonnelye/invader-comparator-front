@@ -49,23 +49,11 @@ export interface PlayersContextType {
   removeOtherUid: (uid: string) => Promise<void>;
   uids: string[];
   playersMap: Record<string, PlayerData>;
-  firstOptions: Option[];
-  secondOptions: Option[];
   loadUids: () => Promise<void>;
   loadPlayers: () => Promise<void>;
 }
 
-/**
- * Filter Context Type
- */
-export interface FilterContextType {
-  selectedFirst: string;
-  selectedSeconds: string[];
-  search: string;
-  setSelectedFirst: (value: string) => void;
-  setSelectedSeconds: (values: string[]) => void;
-  setSearch: (value: string) => void;
-}
+
 
 /**
  * UI Context Type

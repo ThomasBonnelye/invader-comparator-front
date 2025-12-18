@@ -1,7 +1,6 @@
 import { ReactNode, useEffect } from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { UIProvider, useUI } from './UIContext';
-import { FilterProvider } from './FilterContext';
 import { PlayersProvider, usePlayers } from './PlayersContext';
 
 /**
@@ -43,9 +42,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <UIProvider>
       <AuthProvider>
         <DataLoader>
-          <FilterProvider>
-            {children}
-          </FilterProvider>
+          {children}
         </DataLoader>
       </AuthProvider>
     </UIProvider>

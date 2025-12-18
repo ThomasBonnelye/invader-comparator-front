@@ -11,11 +11,21 @@ import {
   TableRow,
   CircularProgress,
 } from '@mui/material';
-import { useAppContext } from '../contexts';
+import { usePlayers } from '../contexts';
 import { compareInvaders } from '../utils/compareInvaders';
 
-const DataTable = React.memo(function DataTable() {
-  const { selectedFirst, selectedSeconds, search, playersMap } = useAppContext();
+interface DataTableProps {
+  selectedFirst: string;
+  selectedSeconds: string[];
+  search: string;
+}
+
+const DataTable = React.memo(function DataTable({
+  selectedFirst,
+  selectedSeconds,
+  search,
+}: DataTableProps) {
+  const { playersMap } = usePlayers();
   const [loading, setLoading] = React.useState(false);
   const [data, setData] = React.useState<Record<string, string[]>>({});
 

@@ -10,24 +10,36 @@ import {
   TextField,
   SelectChangeEvent,
 } from '@mui/material';
-import { useAppContext } from '../contexts';
+import { usePlayers } from '../contexts';
 
-const FilterPanel = React.memo(function FilterPanel() {
-  const {
-    firstOptions,
-    secondOptions,
-    selectedFirst,
-    selectedSeconds,
-    search,
-    setSelectedFirst,
-    setSelectedSeconds,
-    setSearch,
-  } = useAppContext();
+interface FilterPanelProps {
+  selectedFirst: string;
+  selectedSeconds: string[];
+  search: string;
+  onSelectedFirstChange: (value: string) => void;
+  onSelectedSecondsChange: (value: string[]) => void;
+  onSearchChange: (value: string) => void;
+}
 
-  const handleSecondsChange = React.useCallback((event: SelectChangeEvent<typeof selectedSeconds>) => {
+const FilterPanel = React.memo(function FilterPanel({
+  selectedFirst,
+  selectedSeconds,
+  search,
+  onSelectedFirstChange,
+  onSelectedSecondsChange,
+  onSearchChange,
+}: FilterPanelProps) {
+  const { uids, playersMap } = usePlayers();
+
+  const options = uids.map((uid) => ({
+    label: playersMap[uid]?.player || uid,
+    value: uid,
+  }));
+
+  const handleSecondsChange = (event: SelectChangeEvent<typeof selectedSeconds>) => {
     const value = event.target.value;
-    setSelectedSeconds(typeof value === 'string' ? value.split(',') : value);
-  }, [setSelectedSeconds]);
+    onSelectedSecondsChange(typeof value === 'string' ? value.split(',') : value);
+  };
 
   return (
     <Paper sx={{ p: 3, mb: 3 }}>
@@ -36,13 +48,10 @@ const FilterPanel = React.memo(function FilterPanel() {
           <InputLabel>Reference Player</InputLabel>
           <Select
             value={selectedFirst}
-            onChange={(e) => {
-              setSelectedFirst(e.target.value);
-              setSelectedSeconds([]);
-            }}
+            onChange={(e) => onSelectedFirstChange(e.target.value)}
             label="Reference Player"
           >
-            {firstOptions.map((opt) => (
+            {options.map((opt) => (
               <MenuItem key={opt.value} value={opt.value}>
                 {opt.label}
               </MenuItem>
@@ -60,13 +69,13 @@ const FilterPanel = React.memo(function FilterPanel() {
             renderValue={(selected) => (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                 {selected.map((value) => {
-                  const opt = secondOptions.find((o) => o.value === value);
+                  const opt = options.find((o) => o.value === value);
                   return <Chip key={value} label={opt?.label || value} size="small" />;
                 })}
               </Box>
             )}
           >
-            {secondOptions.map((opt) => (
+            {options.map((opt) => (
               <MenuItem key={opt.value} value={opt.value}>
                 {opt.label}
               </MenuItem>
@@ -77,7 +86,7 @@ const FilterPanel = React.memo(function FilterPanel() {
         <TextField
           label="Search invaders"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => onSearchChange(e.target.value)}
           sx={{ flexGrow: 1 }}
         />
       </Box>

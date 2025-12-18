@@ -1,16 +1,12 @@
-import { useAppContext } from "../contexts";
+import { useAuth, usePlayers } from "../contexts";
 import { Button, Divider, Paper, Box, Typography, Card, CardContent, CardActions } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import UidsStepper from "../components/UidsStepper";
 
 export default function Landing() {
   const navigate = useNavigate();
-  const {
-    authStatus,
-    loginWithGoogle,
-    continueAsGuest,
-    myUid
-  } = useAppContext();
+  const { authStatus, loginWithGoogle, continueAsGuest } = useAuth();
+  const { myUid } = usePlayers();
 
   // If user is already authenticated (CONNECTED or GUEST) and has UIDs configured, show navigation cards
   if ((authStatus === 'CONNECTED' || authStatus === 'GUEST') && myUid) {

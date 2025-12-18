@@ -13,7 +13,7 @@ import {
   Stack
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
-import { useAppContext } from '../contexts';
+import { useAuth, usePlayers } from '../contexts';
 
 const steps = [
   'Votre UID',
@@ -27,14 +27,14 @@ const UidsStepper = React.memo(function UidsStepper() {
   const [localOthersUids, setLocalOthersUids] = useState<string[]>([]);
   const [localNewUid, setLocalNewUid] = useState('');
 
+  const { authStatus } = useAuth();
   const {
     myUid,
     othersUids,
     updateMyUid,
     playersMap,
-    loadUids,
-    authStatus
-  } = useAppContext();
+    loadUids
+  } = usePlayers();
 
   // Initialize local state with context values
   useEffect(() => {

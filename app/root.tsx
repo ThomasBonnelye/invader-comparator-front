@@ -6,14 +6,14 @@ import {
   ThemeProvider,
   CssBaseline,
 } from '@mui/material';
-import { AppProvider, useAppContext } from '../src/contexts';
+import { AppProvider, useUI } from '../src/contexts';
 import { getTheme } from '../src/theme';
 import Header from '../src/components/Header';
 import SettingsDrawer from '../src/components/SettingsDrawer';
 import { Outlet } from 'react-router';
 
 function AppContent() {
-  const { message, messageType, themeMode } = useAppContext();
+  const { message, messageType, themeMode } = useUI();
   const theme = getTheme(themeMode);
 
   return (

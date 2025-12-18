@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { fetchPlayers } from '../api/players';
 import { fetchPlayerData, type PlayerData } from '../api/spaceInvaders';
 import { PlayersContextType } from './types';
@@ -51,28 +51,53 @@ export function PlayersProvider({
   // Load players data
   const loadPlayers = useCallback(async () => {
     try {
-      const playersData = await fetchPlayers();
-      const uidsArray = playersData.map((p) => p.value);
-      setUids(uidsArray);
+      if (authStatus === 'CONNECTED') {
+        // Only load from API when connected
+        const playersData = await fetchPlayers();
+        const uidsArray = playersData.map((p) => p.value);
+        setUids(uidsArray);
 
-      const newPlayersMap: Record<string, PlayerData> = {};
-      
-      for (const uid of uidsArray) {
-        try {
-          const data = await fetchPlayerData(uid);
-          newPlayersMap[uid] = data;
-        } catch (e) {
-          console.error('Player fetch failed:', e);
-          newPlayersMap[uid] = { player: uid, invaders: [] };
+        const newPlayersMap: Record<string, PlayerData> = {};
+
+        for (const uid of uidsArray) {
+          try {
+            const data = await fetchPlayerData(uid);
+            newPlayersMap[uid] = data;
+          } catch (e) {
+            console.error('Player fetch failed:', e);
+            newPlayersMap[uid] = { player: uid, invaders: [] };
+          }
         }
+
+        setPlayersMap(newPlayersMap);
+      } else if (authStatus === 'GUEST') {
+        // For guest mode, load UIDs from localStorage and fetch player data
+        const myUidLocal = localStorage.getItem(GUEST_MY_UID_KEY) || '';
+        const othersUidsStr = localStorage.getItem(GUEST_OTHERS_UIDS_KEY);
+        const othersUidsLocal = othersUidsStr ? JSON.parse(othersUidsStr) : [];
+
+        const allUids = [myUidLocal, ...othersUidsLocal].filter(Boolean);
+        setUids(allUids);
+
+        const newPlayersMap: Record<string, PlayerData> = {};
+
+        for (const uid of allUids) {
+          try {
+            const data = await fetchPlayerData(uid);
+            newPlayersMap[uid] = data;
+          } catch (e) {
+            console.error('Player fetch failed:', e);
+            newPlayersMap[uid] = { player: uid, invaders: [] };
+          }
+        }
+
+        setPlayersMap(newPlayersMap);
       }
-      
-      setPlayersMap(newPlayersMap);
     } catch (error) {
       console.error('Players loading failed:', error);
       setUids([]);
     }
-  }, []);
+  }, [authStatus]);
 
   // Update my UID
   const updateMyUid = useCallback(async (uidValue?: string) => {
@@ -194,22 +219,6 @@ export function PlayersProvider({
     }
   }, [authStatus, othersUids, showMessage, loadPlayers]);
 
-  // Memoized first options
-  const firstOptions = useMemo(() => {
-    return uids.map((uid) => ({
-      label: playersMap[uid]?.player || uid,
-      value: uid,
-    }));
-  }, [uids, playersMap]);
-
-  // Memoized second options
-  const secondOptions = useMemo(() => {
-    return uids.map((uid) => ({
-      label: playersMap[uid]?.player || uid,
-      value: uid,
-    }));
-  }, [uids, playersMap]);
-
   return (
     <PlayersContext.Provider value={{
       myUid,
@@ -222,8 +231,6 @@ export function PlayersProvider({
       removeOtherUid,
       uids,
       playersMap,
-      firstOptions,
-      secondOptions,
       loadUids,
       loadPlayers,
     }}>

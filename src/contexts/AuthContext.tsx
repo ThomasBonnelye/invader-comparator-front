@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { AuthContextType, User, AuthStatus } from './types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -97,19 +97,19 @@ export function AuthProvider({
   };
 
   // Continue as guest
-  const continueAsGuest = useCallback(() => {
+  const continueAsGuest = () => {
     authStatusRef.current = 'GUEST';
     onAuthChange?.('GUEST');
     forceUpdate({});
-  }, [onAuthChange]);
+  };
 
   // Google login redirection
-  const loginWithGoogle = useCallback(() => {
+  const loginWithGoogle = () => {
     window.location.href = '/api/auth/google';
-  }, []);
+  };
 
   // Migrate guest data to connected user (public API)
-  const migrateGuestData = useCallback(async () => {
+  const migrateGuestData = async () => {
     if (authStatusRef.current !== 'CONNECTED') {
       console.warn('Cannot migrate guest data: user is not connected');
       return;
@@ -117,16 +117,16 @@ export function AuthProvider({
 
     await migrateGuestDataInternal();
     console.log('Guest data migrated successfully');
-  }, []);
+  };
 
   // Logout function
-  const logout = useCallback(async () => {
+  const logout = async () => {
     try {
       await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
-      
+
       authStatusRef.current = null;
       setUser(null);
       onAuthChange?.(null);
@@ -135,7 +135,7 @@ export function AuthProvider({
       console.error('Logout failed:', error);
       throw error;
     }
-  }, [onAuthChange]);
+  };
 
   return (
     <AuthContext.Provider value={{
