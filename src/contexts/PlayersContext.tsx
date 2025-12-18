@@ -75,11 +75,17 @@ export function PlayersProvider({
   }, []);
 
   // Update my UID
-  const updateMyUid = useCallback(async () => {
+  const updateMyUid = useCallback(async (uidValue?: string) => {
+    const uidToSave = uidValue !== undefined ? uidValue : myUid;
+    
     try {
       if (authStatus === 'GUEST') {
         // Save to localStorage
-        localStorage.setItem(GUEST_MY_UID_KEY, myUid);
+        localStorage.setItem(GUEST_MY_UID_KEY, uidToSave);
+        // Update state if a value was provided
+        if (uidValue !== undefined) {
+          setMyUid(uidToSave);
+        }
         showMessage?.('UID updated successfully', 'success');
         await loadPlayers();
       } else if (authStatus === 'CONNECTED') {
@@ -90,10 +96,14 @@ export function PlayersProvider({
             'Content-Type': 'application/json',
           },
           credentials: 'include',
-          body: JSON.stringify({ uid: myUid }),
+          body: JSON.stringify({ uid: uidToSave }),
         });
 
         if (response.ok) {
+          // Update state if a value was provided
+          if (uidValue !== undefined) {
+            setMyUid(uidToSave);
+          }
           showMessage?.('UID updated successfully', 'success');
           await loadPlayers();
         } else {

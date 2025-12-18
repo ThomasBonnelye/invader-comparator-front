@@ -23,39 +23,38 @@ const steps = [
 const UidsStepper = React.memo(function UidsStepper() {
   const [activeStep, setActiveStep] = useState(0);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [originalMyUid, setOriginalMyUid] = useState('');
+  const [localMyUid, setLocalMyUid] = useState('');
+  const [localOthersUids, setLocalOthersUids] = useState<string[]>([]);
+  const [localNewUid, setLocalNewUid] = useState('');
 
   const {
     myUid,
-    setMyUid,
     othersUids,
-    newUid,
-    setNewUid,
     updateMyUid,
-    addOtherUid,
-    removeOtherUid
+    playersMap,
+    loadUids,
+    authStatus
   } = useAppContext();
 
+  // Initialize local state with context values
   useEffect(() => {
-    setOriginalMyUid(myUid);
-  }, [myUid]);
+    setLocalMyUid(myUid);
+    setLocalOthersUids(othersUids);
+  }, [myUid, othersUids]);
 
   const isValidUUID = (uid: string) => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return uuidRegex.test(uid.trim());
   };
 
-  const handleNext = async () => {
-    if (activeStep === 0 && !isUpdating) {
-      if (!isValidUUID(myUid)) {
+  const handleNext = () => {
+    if (activeStep === 0) {
+      if (!isValidUUID(localMyUid)) {
         alert('Veuillez entrer un UID valide (format UUID).');
         return;
       }
-      if (myUid.trim() !== originalMyUid) {
-        setIsUpdating(true);
-        await updateMyUid();
-        setIsUpdating(false);
-      }
+      
+      // Passer à l'étape suivante sans sauvegarder
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
     }
   };
@@ -64,12 +63,66 @@ const UidsStepper = React.memo(function UidsStepper() {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
-  const handleAddOther = async () => {
-    if (!isValidUUID(newUid)) {
+  const handleAddOther = () => {
+    if (!isValidUUID(localNewUid)) {
       alert('Veuillez entrer un UID valide');
       return;
     }
-    await addOtherUid();
+    
+    // Ajouter à la liste locale
+    setLocalOthersUids([...localOthersUids, localNewUid]);
+    setLocalNewUid('');
+  };
+
+  const handleRemoveOther = (uid: string) => {
+    // Retirer de la liste locale
+    setLocalOthersUids(localOthersUids.filter((u) => u !== uid));
+  };
+
+  const handleFinish = async () => {
+    // Sauvegarder tout : myUid + othersUids
+    setIsUpdating(true);
+    
+    try {
+      // Sauvegarder myUid
+      await updateMyUid(localMyUid);
+      
+      // Sauvegarder othersUids
+      if (authStatus === 'GUEST') {
+        const { GUEST_OTHERS_UIDS_KEY } = await import('../contexts/AuthContext');
+        localStorage.setItem(GUEST_OTHERS_UIDS_KEY, JSON.stringify(localOthersUids));
+      } else if (authStatus === 'CONNECTED') {
+        // Sauvegarder via API
+        for (const uid of localOthersUids) {
+          if (!othersUids.includes(uid)) {
+            await fetch('/api/uids/others-uids', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ uid }),
+            });
+          }
+        }
+        
+        // Supprimer les UIDs retirés
+        for (const uid of othersUids) {
+          if (!localOthersUids.includes(uid)) {
+            await fetch(`/api/uids/others-uids/${encodeURIComponent(uid)}`, {
+              method: 'DELETE',
+              credentials: 'include',
+            });
+          }
+        }
+      }
+      
+      // Recharger les UIDs pour rafraîchir l'affichage
+      await loadUids();
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      alert('Erreur lors de la sauvegarde');
+    }
+    
+    setIsUpdating(false);
   };
 
   const getStepContent = (step: number) => {
@@ -82,11 +135,11 @@ const UidsStepper = React.memo(function UidsStepper() {
             </Typography>
             <TextField
               fullWidth
-              value={myUid}
-              onChange={(e) => setMyUid(e.target.value)}
-              placeholder="627F176F-54C3-4D32-90EF-C4C80462A2C3"
-              error={!isValidUUID(myUid) && myUid.length > 0}
-              helperText={!isValidUUID(myUid) && myUid.length > 0 ? 'Format UUID invalide' : ''}
+              value={localMyUid}
+              onChange={(e) => setLocalMyUid(e.target.value)}
+              placeholder="AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
+              error={!isValidUUID(localMyUid) && localMyUid.length > 0}
+              helperText={!isValidUUID(localMyUid) && localMyUid.length > 0 ? 'Format UUID invalide' : ''}
               sx={{ mb: 2 }}
             />
           </Box>
@@ -98,23 +151,26 @@ const UidsStepper = React.memo(function UidsStepper() {
               UIDs des autres
             </Typography>
             <Box sx={{ mb: 2 }}>
-              {othersUids.map((uid) => (
-                <Chip
-                  key={uid}
-                  label={uid}
-                  onDelete={() => removeOtherUid(uid)}
-                  sx={{ mr: 1, mb: 1 }}
-                />
-              ))}
+              {localOthersUids.map((uid) => {
+                const playerName = playersMap[uid]?.player || uid;
+                return (
+                  <Chip
+                    key={uid}
+                    label={playerName}
+                    onDelete={() => handleRemoveOther(uid)}
+                    sx={{ mr: 1, mb: 1 }}
+                  />
+                );
+              })}
             </Box>
             <Stack direction="row" spacing={1} alignItems="center">
               <TextField
                 fullWidth
-                value={newUid}
-                onChange={(e) => setNewUid(e.target.value)}
+                value={localNewUid}
+                onChange={(e) => setLocalNewUid(e.target.value)}
                 placeholder="Entrez un UID d'un de vos amis"
-                error={!isValidUUID(newUid) && newUid.length > 0}
-                helperText={!isValidUUID(newUid) && newUid.length > 0 ? 'Format UUID invalide' : ''}
+                error={!isValidUUID(localNewUid) && localNewUid.length > 0}
+                helperText={!isValidUUID(localNewUid) && localNewUid.length > 0 ? 'Format UUID invalide' : ''}
               />
               <IconButton onClick={handleAddOther} color="primary">
                 <AddIcon />
@@ -150,8 +206,13 @@ const UidsStepper = React.memo(function UidsStepper() {
             </Button>
             <Box sx={{ flex: '1 1 auto' }} />
             {activeStep === 0 && (
-              <Button onClick={handleNext} disabled={isUpdating}>
-                {isUpdating ? 'Mise à jour...' : 'Suivant'}
+              <Button onClick={handleNext}>
+                Suivant
+              </Button>
+            )}
+            {activeStep === 1 && (
+              <Button onClick={handleFinish} variant="contained" disabled={isUpdating}>
+                {isUpdating ? 'Mise à jour...' : 'Valider'}
               </Button>
             )}
           </Box>

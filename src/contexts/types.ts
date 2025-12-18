@@ -44,7 +44,7 @@ export interface PlayersContextType {
   newUid: string;
   setMyUid: (uid: string) => void;
   setNewUid: (uid: string) => void;
-  updateMyUid: () => Promise<void>;
+  updateMyUid: (uidValue?: string) => Promise<void>;
   addOtherUid: () => Promise<void>;
   removeOtherUid: (uid: string) => Promise<void>;
   uids: string[];
