@@ -8,16 +8,12 @@ import {
   IconButton,
   Chip,
 } from "@mui/material";
-import {
-  Settings as SettingsIcon,
-  Brightness4,
-  Brightness7,
-} from "@mui/icons-material";
+import { Settings as SettingsIcon } from "@mui/icons-material";
 import { useUI, useAuth } from "../contexts";
 
 const Header = React.memo(function Header() {
-  const { authStatus, user, loginWithGoogle, logout } = useAuth();
-  const { setShowSettings, themeMode, toggleTheme } = useUI();
+  const { authStatus, user, loginWithGoogle } = useAuth();
+  const { setShowSettings } = useUI();
 
   const handleLoginFromGuest = async () => {
     // Initiate login - migration will happen automatically in AuthContext
@@ -33,8 +29,8 @@ const Header = React.memo(function Header() {
 
         <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
           {authStatus === null ? (
-            <IconButton color="inherit" onClick={toggleTheme}>
-              {themeMode === "dark" ? <Brightness7 /> : <Brightness4 />}
+            <IconButton color="inherit" onClick={() => setShowSettings(true)}>
+              <SettingsIcon />
             </IconButton>
           ) : authStatus === "GUEST" ? (
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
@@ -56,9 +52,6 @@ const Header = React.memo(function Header() {
               <IconButton color="inherit" onClick={() => setShowSettings(true)}>
                 <SettingsIcon />
               </IconButton>
-              <Button color="inherit" onClick={logout}>
-                Déconnexion
-              </Button>
             </Box>
           )}
         </Box>
