@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { fetchPlayers } from '../api/players';
 import { fetchPlayerData, type PlayerData } from '../api/spaceInvaders';
 import { PlayersContextType } from './types';
@@ -20,6 +20,18 @@ export function PlayersProvider({
   const [newUid, setNewUid] = useState('');
   const [uids, setUids] = useState<string[]>([]);
   const [playersMap, setPlayersMap] = useState<Record<string, PlayerData>>({});
+
+  // Clear data when logging out
+  useEffect(() => {
+    if (authStatus === null) {
+      // Reset all data when logged out
+      setMyUid('');
+      setOthersUids([]);
+      setNewUid('');
+      setUids([]);
+      setPlayersMap({});
+    }
+  }, [authStatus]);
 
   // Load UIDs from localStorage (guest) or API (connected)
   const loadUids = useCallback(async () => {
