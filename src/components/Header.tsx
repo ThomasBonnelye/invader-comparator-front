@@ -9,11 +9,13 @@ import {
   Chip,
 } from "@mui/material";
 import { Settings as SettingsIcon } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import { useUI, useAuth } from "../contexts";
 
 const Header = React.memo(function Header() {
   const { authStatus, user, loginWithGoogle } = useAuth();
   const { setShowSettings } = useUI();
+  const navigate = useNavigate();
 
   const handleLoginFromGuest = async () => {
     // Initiate login - migration will happen automatically in AuthContext
@@ -23,7 +25,18 @@ const Header = React.memo(function Header() {
   return (
     <AppBar position="static" color="transparent">
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+        <Typography 
+          variant="h6" 
+          component="div" 
+          sx={{ 
+            flexGrow: 1, 
+            cursor: "pointer",
+            "&:hover": {
+              opacity: 0.8
+            }
+          }}
+          onClick={() => navigate("/")}
+        >
           Invader Comparator
         </Typography>
 
