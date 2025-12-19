@@ -106,8 +106,8 @@ const DataTable = React.memo(function DataTable({
       <Paper sx={{ p: 3, textAlign: 'center' }}>
         <Typography color="text.secondary">
           {selectedFirst && selectedSeconds.length > 0
-            ? 'No invaders found matching your search'
-            : 'Select players to compare their invaders'}
+            ? 'Aucun invader trouvé avec les critères donnés'
+            : 'Sélectionnez des joueurs pour comparer leurs invaders'}
         </Typography>
       </Paper>
     );

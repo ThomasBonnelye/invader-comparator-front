@@ -45,11 +45,11 @@ const FilterPanel = React.memo(function FilterPanel({
     <Paper sx={{ p: 3, mb: 3 }}>
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>Reference Player</InputLabel>
+          <InputLabel>Joueur de référence</InputLabel>
           <Select
             value={selectedFirst}
             onChange={(e) => onSelectedFirstChange(e.target.value)}
-            label="Reference Player"
+            label="Joueur de référence"
           >
             {options.map((opt) => (
               <MenuItem key={opt.value} value={opt.value}>
@@ -60,12 +60,12 @@ const FilterPanel = React.memo(function FilterPanel({
         </FormControl>
 
         <FormControl sx={{ minWidth: 300 }} disabled={!selectedFirst}>
-          <InputLabel>Compare with</InputLabel>
+          <InputLabel>Comparer avec</InputLabel>
           <Select
             multiple
             value={selectedSeconds}
             onChange={handleSecondsChange}
-            label="Compare with"
+            label="Comparer avec"
             renderValue={(selected) => (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                 {selected.map((value) => {
@@ -84,7 +84,7 @@ const FilterPanel = React.memo(function FilterPanel({
         </FormControl>
 
         <TextField
-          label="Search invaders"
+          label="Rechercher des invader"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           sx={{ flexGrow: 1 }}
