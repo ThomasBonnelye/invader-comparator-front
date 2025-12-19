@@ -2,6 +2,7 @@ import { type RouteObject } from "react-router-dom";
 import Root from "./root";
 import Landing from "../src/pages/Home";
 import Comparator from "../src/pages/Comparator";
+import { ProtectedRoute } from "../src/components/ProtectedRoute";
 
 const routes: RouteObject[] = [
   {
@@ -14,7 +15,11 @@ const routes: RouteObject[] = [
       },
       {
         path: "comparator",
-        element: <Comparator />,
+        element: (
+          <ProtectedRoute>
+            <Comparator />
+          </ProtectedRoute>
+        ),
       },
     ],
   },
