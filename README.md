@@ -2,6 +2,12 @@
 
 Frontend application for comparing Space Invader collections between players, built with React, TypeScript, Material-UI, and React Router.
 
+## Live Demo
+
+The application is deployed and accessible at: [https://invader-comparator-front.vercel.app/](https://invader-comparator-front.vercel.app/)
+
+**Note:** Only the "Continuer en tant qu'invité" (Continue as guest) option is functional in the live demo. Google authentication is not available on the deployed version.
+
 ## Tech Stack
 
 - React 19 with TypeScript
