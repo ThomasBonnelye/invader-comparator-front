@@ -10,15 +10,16 @@ import {
   Button,
   Chip,
   IconButton,
-  Stack
+  Stack,
+  Link
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, Info as InfoIcon } from '@mui/icons-material';
 import { useAuth, usePlayers } from '../contexts';
 import { fetchPlayerData, type PlayerData } from '../api/spaceInvaders';
 
 const steps = [
   'Votre UID',
-  'UIDS de vos amis',
+  'UIDs de vos amis',
 ];
 
 const UidsStepper = React.memo(function UidsStepper() {
@@ -214,7 +215,7 @@ const UidsStepper = React.memo(function UidsStepper() {
                     setOtherUidError('');
                   }
                 }}
-                placeholder="Entrez un UID d'un de vos amis"
+                placeholder="AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
                 error={!!otherUidError || (!isValidUUID(localNewUid) && localNewUid.length > 0)}
                 helperText={otherUidError || ((!isValidUUID(localNewUid) && localNewUid.length > 0) ? 'Format UUID invalide' : '')}
               />
@@ -230,6 +231,7 @@ const UidsStepper = React.memo(function UidsStepper() {
   };
 
   return (
+    <>
     <Paper sx={{ p: 3, mb: 3 }}>
       <Box sx={{ width: '100%' }}>
         <Stepper activeStep={activeStep} alternativeLabel>
@@ -265,6 +267,20 @@ const UidsStepper = React.memo(function UidsStepper() {
         </Box>
       </Box>
     </Paper>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
+      <InfoIcon fontSize="small" color="action" />
+      <Link 
+        href="https://medium.com/@cborel/mapinvaders-4684e840697f" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+      >
+        <Typography variant="body2" color="text.secondary">
+          Comment trouver mon UID ?
+        </Typography>
+      </Link>
+    </Box>
+    </>
   );
 });
 

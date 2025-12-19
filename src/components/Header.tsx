@@ -23,7 +23,7 @@ const Header = React.memo(function Header() {
   };
 
   return (
-    <AppBar position="static" color="transparent">
+    <AppBar position="sticky" color="primary" sx={{ borderRadius: 0 }}>
       <Toolbar>
         <Typography 
           variant="h6" 

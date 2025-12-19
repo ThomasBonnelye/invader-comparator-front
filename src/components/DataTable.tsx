@@ -30,7 +30,7 @@ const DataTable = React.memo(function DataTable({
   const [loading, setLoading] = React.useState(false);
   const [data, setData] = React.useState<Record<string, string[]>>({});
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(25);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
   React.useEffect(() => {
     if (!selectedFirst || selectedSeconds.length === 0) {

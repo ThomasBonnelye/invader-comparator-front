@@ -35,6 +35,19 @@ npm run dev
 
 The application will be available at `http://localhost:5173` (default Vite port)
 
+## Configuration
+
+### Adding Your UIDs
+
+To use the Invader Comparator, you'll need to configure your Space Invaders UID and optionally add your friends' UIDs:
+
+1. **Login or continue as guest**: On the home page, you can either log in with Google or continue as a guest
+2. **Configure UIDs**: Follow the stepper to add your UID (UUID format: `AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA`)
+3. **Add friends' UIDs**: In the second step, you can add multiple UIDs to compare collections
+4. **Access settings**: You can modify your UIDs anytime via the settings drawer (click the settings icon in the header)
+
+**Need help finding your UID?** Check out [this tutorial](https://medium.com/@cborel/mapinvaders-4684e840697f) for detailed instructions.
+
 ### Build
 
 Build for production:

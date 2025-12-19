@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Drawer,
   Box,
@@ -11,7 +11,8 @@ import {
   FormControlLabel,
   Stack,
   Chip,
-} from '@mui/material';
+  Link,
+} from "@mui/material";
 import {
   Close as CloseIcon,
   Brightness4 as Brightness4Icon,
@@ -20,32 +21,30 @@ import {
   People as PeopleIcon,
   Person as PersonIcon,
   Add as AddIcon,
-} from '@mui/icons-material';
-import { useUI, usePlayers, useAuth } from '../contexts';
-import { fetchPlayerData, type PlayerData } from '../api/spaceInvaders';
+  Info as InfoIcon,
+} from "@mui/icons-material";
+import { useUI, usePlayers, useAuth } from "../contexts";
+import { fetchPlayerData, type PlayerData } from "../api/spaceInvaders";
 
 const isValidUUID = (uid: string) => {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return uuidRegex.test(uid.trim());
 };
 
 function SettingsDrawer() {
   const { showSettings, setShowSettings, themeMode, toggleTheme } = useUI();
   const { logout, authStatus } = useAuth();
-  const {
-    myUid,
-    setMyUid,
-    othersUids,
-    updateMyUid,
-    playersMap,
-    loadUids,
-  } = usePlayers();
+  const { myUid, setMyUid, othersUids, updateMyUid, playersMap, loadUids } =
+    usePlayers();
 
-  const [localMyUid, setLocalMyUid] = useState('');
+  const [localMyUid, setLocalMyUid] = useState("");
   const [localOthersUids, setLocalOthersUids] = useState<string[]>([]);
-  const [localNewUid, setLocalNewUid] = useState('');
-  const [otherUidError, setOtherUidError] = useState('');
-  const [localPlayersMap, setLocalPlayersMap] = useState<Record<string, PlayerData>>({});
+  const [localNewUid, setLocalNewUid] = useState("");
+  const [otherUidError, setOtherUidError] = useState("");
+  const [localPlayersMap, setLocalPlayersMap] = useState<
+    Record<string, PlayerData>
+  >({});
 
   useEffect(() => {
     setLocalMyUid(myUid);
@@ -53,20 +52,26 @@ function SettingsDrawer() {
   }, [myUid, othersUids]);
 
   const handleAddOther = async () => {
-    setOtherUidError('');
+    setOtherUidError("");
 
     if (!isValidUUID(localNewUid)) {
-      setOtherUidError('Please enter a valid UID');
+      setOtherUidError("Veuillez entrer un UID valide");
       return;
     }
 
     if (localMyUid.toLowerCase() === localNewUid.toLowerCase()) {
-      setOtherUidError('You cannot add your own UID to the other players list');
+      setOtherUidError(
+        "Vous ne pouvez pas ajouter votre propre UID dans la liste des autres joueurs"
+      );
       return;
     }
 
-    if (localOthersUids.some(uid => uid.toLowerCase() === localNewUid.toLowerCase())) {
-      setOtherUidError('This UID is already in the list');
+    if (
+      localOthersUids.some(
+        (uid) => uid.toLowerCase() === localNewUid.toLowerCase()
+      )
+    ) {
+      setOtherUidError("Cet UID est déjà dans la liste");
       return;
     }
 
@@ -75,20 +80,20 @@ function SettingsDrawer() {
 
     try {
       const playerData = await fetchPlayerData(localNewUid);
-      setLocalPlayersMap(prev => ({
+      setLocalPlayersMap((prev) => ({
         ...prev,
-        [localNewUid]: playerData
+        [localNewUid]: playerData,
       }));
     } catch (error) {
-      console.error('Error loading player data:', error);
-      setLocalPlayersMap(prev => ({
+      console.error("Error loading player data:", error);
+      setLocalPlayersMap((prev) => ({
         ...prev,
-        [localNewUid]: { player: localNewUid, invaders: [] }
+        [localNewUid]: { player: localNewUid, invaders: [] },
       }));
     }
 
     await saveOthersUids(newUids);
-    setLocalNewUid('');
+    setLocalNewUid("");
   };
 
   const handleRemoveOther = async (uid: string) => {
@@ -102,8 +107,12 @@ function SettingsDrawer() {
       return;
     }
 
-    if (localOthersUids.some(otherUid => otherUid.toLowerCase() === uid.toLowerCase())) {
-      alert('Your UID cannot be in the other players list.');
+    if (
+      localOthersUids.some(
+        (otherUid) => otherUid.toLowerCase() === uid.toLowerCase()
+      )
+    ) {
+      alert("Votre UID ne peut pas être dans la liste des autres joueurs.");
       return;
     }
 
@@ -111,32 +120,33 @@ function SettingsDrawer() {
       setMyUid(uid);
       await updateMyUid(uid);
     } catch (error) {
-      console.error('Error saving UID:', error);
+      console.error("Error saving UID:", error);
     }
   };
 
   const saveOthersUids = async (uids: string[]) => {
     try {
-      if (authStatus === 'GUEST') {
-        const { GUEST_OTHERS_UIDS_KEY } = await import('../contexts/AuthContext');
+      if (authStatus === "GUEST") {
+        const { GUEST_OTHERS_UIDS_KEY } =
+          await import("../contexts/AuthContext");
         localStorage.setItem(GUEST_OTHERS_UIDS_KEY, JSON.stringify(uids));
         await loadUids();
-      } else if (authStatus === 'CONNECTED') {
+      } else if (authStatus === "CONNECTED") {
         for (const uid of othersUids) {
           if (!uids.includes(uid)) {
             await fetch(`/api/uids/others-uids/${encodeURIComponent(uid)}`, {
-              method: 'DELETE',
-              credentials: 'include',
+              method: "DELETE",
+              credentials: "include",
             });
           }
         }
 
         for (const uid of uids) {
           if (!othersUids.includes(uid)) {
-            await fetch('/api/uids/others-uids', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
+            await fetch("/api/uids/others-uids", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
               body: JSON.stringify({ uid }),
             });
           }
@@ -145,7 +155,7 @@ function SettingsDrawer() {
         await loadUids();
       }
     } catch (error) {
-      console.error('Error saving other UIDs:', error);
+      console.error("Error saving other UIDs:", error);
     }
   };
 
@@ -154,44 +164,64 @@ function SettingsDrawer() {
       anchor="right"
       open={showSettings}
       onClose={() => setShowSettings(false)}
+      slotProps={{
+        paper: {
+          sx: {
+            borderTopRightRadius: 0,
+            borderBottomRightRadius: 0,
+          },
+        },
+      }}
     >
-      <Box sx={{ width: 450, p: 3, display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-          <Typography variant="h5">Settings</Typography>
+      <Box
+        sx={{
+          width: 450,
+          p: 3,
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+        }}
+      >
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+          <Typography variant="h5">Paramètres</Typography>
           <IconButton onClick={() => setShowSettings(false)}>
             <CloseIcon />
           </IconButton>
         </Box>
 
         <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            {themeMode === 'dark' ? <Brightness7Icon sx={{ mr: 1 }} /> : <Brightness4Icon sx={{ mr: 1 }} />}
+          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+            {themeMode === "dark" ? (
+              <Brightness7Icon sx={{ mr: 1, color: "primary.main" }} />
+            ) : (
+              <Brightness4Icon sx={{ mr: 1, color: "primary.main" }} />
+            )}
             <Typography variant="h6">Theme</Typography>
           </Box>
           <FormControlLabel
             control={
               <Switch
-                checked={themeMode === 'dark'}
+                checked={themeMode === "dark"}
                 onChange={toggleTheme}
                 color="primary"
               />
             }
-            label={themeMode === 'dark' ? 'Dark mode' : 'Light mode'}
+            label={themeMode === "dark" ? "Dark mode" : "Light mode"}
           />
         </Box>
 
         <Divider sx={{ mb: 4 }} />
 
         <Box sx={{ mb: 4, flex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-            <PeopleIcon sx={{ mr: 1, color: 'primary.main' }} />
-            <Typography variant="h6">UID Management</Typography>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+            <PeopleIcon sx={{ mr: 1, color: "primary.main" }} />
+            <Typography variant="h6">Gestions des UIDs</Typography>
           </Box>
 
           <Box sx={{ mb: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <PersonIcon sx={{ mr: 1, fontSize: '1.2rem' }} />
-              <Typography variant="subtitle1">My UID</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+              <PersonIcon sx={{ mr: 1, fontSize: "1.2rem" }} />
+              <Typography variant="subtitle1">Mon UID</Typography>
             </Box>
             <TextField
               fullWidth
@@ -200,20 +230,27 @@ function SettingsDrawer() {
               onBlur={(e) => saveMyUid(e.target.value)}
               placeholder="AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
               error={!isValidUUID(localMyUid) && localMyUid.length > 0}
-              helperText={!isValidUUID(localMyUid) && localMyUid.length > 0 ? 'Invalid UUID format' : ''}
+              helperText={
+                !isValidUUID(localMyUid) && localMyUid.length > 0
+                  ? "Format UUID invalide"
+                  : ""
+              }
               sx={{ mb: 2 }}
             />
           </Box>
 
           <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <PeopleIcon sx={{ mr: 1, fontSize: '1.2rem' }} />
-              <Typography variant="subtitle1">Other players UIDs</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+              <PeopleIcon sx={{ mr: 1, fontSize: "1.2rem" }} />
+              <Typography variant="subtitle1">UIDs de vos amis</Typography>
             </Box>
 
             <Box sx={{ mb: 2 }}>
               {localOthersUids.map((uid) => {
-                const playerName = localPlayersMap[uid]?.player || playersMap[uid]?.player || uid;
+                const playerName =
+                  localPlayersMap[uid]?.player ||
+                  playersMap[uid]?.player ||
+                  uid;
                 return (
                   <Chip
                     key={uid}
@@ -226,31 +263,57 @@ function SettingsDrawer() {
               })}
             </Box>
 
-            <Stack direction="row" spacing={1} alignItems="flex-start">
+            <Stack direction="row" spacing={1} alignItems="flex-center">
               <TextField
                 fullWidth
                 value={localNewUid}
                 onChange={(e) => {
                   setLocalNewUid(e.target.value);
                   if (otherUidError) {
-                    setOtherUidError('');
+                    setOtherUidError("");
                   }
                 }}
-                placeholder="Enter a friend's UID"
-                error={!!otherUidError || (!isValidUUID(localNewUid) && localNewUid.length > 0)}
-                helperText={otherUidError || ((!isValidUUID(localNewUid) && localNewUid.length > 0) ? 'Invalid UUID format' : '')}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddOther()}
+                placeholder="AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
+                error={
+                  !!otherUidError ||
+                  (!isValidUUID(localNewUid) && localNewUid.length > 0)
+                }
+                helperText={
+                  otherUidError ||
+                  (!isValidUUID(localNewUid) && localNewUid.length > 0
+                    ? "Format UUID invalide"
+                    : "")
+                }
+                onKeyDown={(e) => e.key === "Enter" && handleAddOther()}
               />
-              <IconButton onClick={handleAddOther} color="primary" sx={{ mt: 1 }}>
+              <IconButton
+                onClick={handleAddOther}
+                color="primary"
+                sx={{ mt: 1 }}
+              >
                 <AddIcon />
               </IconButton>
             </Stack>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, justifyContent: 'center' }}>
+              <InfoIcon fontSize="small" color="action" />
+              <Link 
+                href="https://medium.com/@cborel/mapinvaders-4684e840697f" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  Comment trouver mon UID ?
+                </Typography>
+              </Link>
+            </Box>
           </Box>
         </Box>
 
         <Divider sx={{ mb: 4 }} />
 
-        {authStatus === 'CONNECTED' && (
+        {authStatus === "CONNECTED" && (
           <Box>
             <Button
               variant="outlined"

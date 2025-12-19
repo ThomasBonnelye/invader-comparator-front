@@ -2,6 +2,7 @@ import { useAuth, usePlayers } from "../contexts";
 import { Button, Divider, Paper, Box, Typography, Card, CardContent, CardActions } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import UidsStepper from "../components/UidsStepper";
+import { FitScreen } from "@mui/icons-material";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -58,7 +59,7 @@ export default function Landing() {
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
-        minHeight: '100vh',
+        minHeight: 'calc(100vh - 128px)',
         p: 2
       }}
     >
