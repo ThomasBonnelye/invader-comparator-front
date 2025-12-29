@@ -36,6 +36,8 @@ const FilterPanel = React.memo(function FilterPanel({
     value: uid,
   }));
 
+  const secondOptions = options.filter((opt) => opt.value !== selectedFirst);
+
   const handleSecondsChange = (event: SelectChangeEvent<typeof selectedSeconds>) => {
     const value = event.target.value;
     onSelectedSecondsChange(typeof value === 'string' ? value.split(',') : value);
@@ -75,7 +77,7 @@ const FilterPanel = React.memo(function FilterPanel({
               </Box>
             )}
           >
-            {options.map((opt) => (
+            {secondOptions.map((opt) => (
               <MenuItem key={opt.value} value={opt.value}>
                 {opt.label}
               </MenuItem>
