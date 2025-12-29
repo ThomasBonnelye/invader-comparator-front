@@ -1,58 +1,81 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { fetchPlayers } from '../api/players';
 import { fetchPlayerData, type PlayerData } from '../api/spaceInvaders';
-import { PlayersState } from '../types';
+import { AuthStatus } from '../contexts/types';
+import { GUEST_MY_UID_KEY, GUEST_OTHERS_UIDS_KEY } from './useUids';
 
-export function usePlayers(selectedFirst: string): PlayersState & { loadPlayers: () => Promise<void> } {
+interface UsePlayersOptions {
+  authStatus: AuthStatus;
+}
+
+interface UsePlayersReturn {
+  uids: string[];
+  playersMap: Record<string, PlayerData>;
+  loadPlayers: () => Promise<void>;
+  resetPlayers: () => void;
+}
+
+export function usePlayers({ authStatus }: UsePlayersOptions): UsePlayersReturn {
   const [uids, setUids] = useState<string[]>([]);
   const [playersMap, setPlayersMap] = useState<Record<string, PlayerData>>({});
 
+  const resetPlayers = useCallback(() => {
+    setUids([]);
+    setPlayersMap({});
+  }, []);
+
   const loadPlayers = useCallback(async () => {
     try {
-      const playersData = await fetchPlayers();
-      const uidsArray = playersData.map((p) => p.value);
-      setUids(uidsArray);
+      if (authStatus === 'CONNECTED') {
+        const playersData = await fetchPlayers();
+        const uidsArray = playersData.map((p) => p.value);
+        setUids(uidsArray);
 
-      const newPlayersMap: Record<string, PlayerData> = {};
+        const newPlayersMap: Record<string, PlayerData> = {};
 
-      for (const uid of uidsArray) {
-        try {
-          const data = await fetchPlayerData(uid);
-          newPlayersMap[uid] = data;
-        } catch (e) {
-          console.error('Player fetch failed:', e);
-          newPlayersMap[uid] = { player: uid, invaders: [] };
+        for (const uid of uidsArray) {
+          try {
+            const data = await fetchPlayerData(uid);
+            newPlayersMap[uid] = data;
+          } catch (e) {
+            console.error('Player fetch failed:', e);
+            newPlayersMap[uid] = { player: uid, invaders: [] };
+          }
         }
-      }
 
-      setPlayersMap(newPlayersMap);
+        setPlayersMap(newPlayersMap);
+      } else if (authStatus === 'GUEST') {
+        const myUidLocal = localStorage.getItem(GUEST_MY_UID_KEY) || '';
+        const othersUidsStr = localStorage.getItem(GUEST_OTHERS_UIDS_KEY);
+        const othersUidsLocal = othersUidsStr ? JSON.parse(othersUidsStr) : [];
+
+        const allUids = [myUidLocal, ...othersUidsLocal].filter(Boolean);
+        setUids(allUids);
+
+        const newPlayersMap: Record<string, PlayerData> = {};
+
+        for (const uid of allUids) {
+          try {
+            const data = await fetchPlayerData(uid);
+            newPlayersMap[uid] = data;
+          } catch (e) {
+            console.error('Player fetch failed:', e);
+            newPlayersMap[uid] = { player: uid, invaders: [] };
+          }
+        }
+
+        setPlayersMap(newPlayersMap);
+      }
     } catch (error) {
       console.error('Players loading failed:', error);
       setUids([]);
     }
-  }, []);
-
-  const firstOptions = useMemo(() => {
-    return uids.map((uid) => ({
-      label: playersMap[uid]?.player || uid,
-      value: uid,
-    }));
-  }, [uids, playersMap]);
-
-  const secondOptions = useMemo(() => {
-    return uids
-      .filter((uid) => uid !== selectedFirst)
-      .map((uid) => ({
-        label: playersMap[uid]?.player || uid,
-        value: uid,
-      }));
-  }, [uids, playersMap, selectedFirst]);
+  }, [authStatus]);
 
   return {
     uids,
     playersMap,
-    firstOptions,
-    secondOptions,
     loadPlayers,
+    resetPlayers,
   };
 }

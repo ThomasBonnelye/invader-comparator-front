@@ -16,6 +16,7 @@ import {
 import { Add as AddIcon, Info as InfoIcon } from '@mui/icons-material';
 import { useAuth, usePlayers } from '../contexts';
 import { fetchPlayerData, type PlayerData } from '../api/spaceInvaders';
+import { GUEST_OTHERS_UIDS_KEY } from '../hooks/useUids';
 
 const steps = [
   'Votre UID',
@@ -58,13 +59,11 @@ const UidsStepper = React.memo(function UidsStepper() {
         return;
       }
 
-      // Vérifier que le myUid n'est pas déjà dans la liste des autres
       if (localOthersUids.some(uid => uid.toLowerCase() === localMyUid.toLowerCase())) {
         alert('Votre UID ne peut pas être dans la liste des autres joueurs. Veuillez le retirer de la liste des autres avant de continuer.');
         return;
       }
 
-      // Passer à l'étape suivante sans sauvegarder
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
     }
   };
@@ -74,7 +73,6 @@ const UidsStepper = React.memo(function UidsStepper() {
   };
 
   const handleAddOther = async () => {
-    // Réinitialiser l'erreur
     setOtherUidError('');
 
     if (!isValidUUID(localNewUid)) {
@@ -82,7 +80,6 @@ const UidsStepper = React.memo(function UidsStepper() {
       return;
     }
 
-    // Vérifier les doublons
     if (localMyUid.toLowerCase() === localNewUid.toLowerCase()) {
       setOtherUidError('Vous ne pouvez pas ajouter votre propre UID dans la liste des autres joueurs');
       return;
@@ -93,10 +90,8 @@ const UidsStepper = React.memo(function UidsStepper() {
       return;
     }
 
-    // Ajouter à la liste locale
     setLocalOthersUids([...localOthersUids, localNewUid]);
 
-    // Charger les données du joueur depuis l'API
     try {
       const playerData = await fetchPlayerData(localNewUid);
       setLocalPlayersMap(prev => ({
@@ -105,7 +100,6 @@ const UidsStepper = React.memo(function UidsStepper() {
       }));
     } catch (error) {
       console.error('Erreur lors du chargement des données du joueur:', error);
-      // En cas d'erreur, utiliser l'UID comme nom
       setLocalPlayersMap(prev => ({
         ...prev,
         [localNewUid]: { player: localNewUid, invaders: [] }
@@ -116,24 +110,18 @@ const UidsStepper = React.memo(function UidsStepper() {
   };
 
   const handleRemoveOther = (uid: string) => {
-    // Retirer de la liste locale
     setLocalOthersUids(localOthersUids.filter((u) => u !== uid));
   };
 
   const handleFinish = async () => {
-    // Sauvegarder tout : myUid + othersUids
     setIsUpdating(true);
     
     try {
-      // Sauvegarder myUid
       await updateMyUid(localMyUid);
       
-      // Sauvegarder othersUids
       if (authStatus === 'GUEST') {
-        const { GUEST_OTHERS_UIDS_KEY } = await import('../contexts/AuthContext');
         localStorage.setItem(GUEST_OTHERS_UIDS_KEY, JSON.stringify(localOthersUids));
       } else if (authStatus === 'CONNECTED') {
-        // Sauvegarder via API
         for (const uid of localOthersUids) {
           if (!othersUids.includes(uid)) {
             await fetch('/api/uids/others-uids', {
@@ -145,7 +133,6 @@ const UidsStepper = React.memo(function UidsStepper() {
           }
         }
         
-        // Supprimer les UIDs retirés
         for (const uid of othersUids) {
           if (!localOthersUids.includes(uid)) {
             await fetch(`/api/uids/others-uids/${encodeURIComponent(uid)}`, {
@@ -156,7 +143,6 @@ const UidsStepper = React.memo(function UidsStepper() {
         }
       }
       
-      // Recharger les UIDs pour rafraîchir l'affichage
       await loadUids();
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);

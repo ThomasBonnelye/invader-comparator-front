@@ -1,11 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { AuthContextType, User, AuthStatus } from './types';
+import { GUEST_MY_UID_KEY, GUEST_OTHERS_UIDS_KEY } from '../hooks/useUids';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// LocalStorage keys
-export const GUEST_MY_UID_KEY = 'guest_myUid';
-export const GUEST_OTHERS_UIDS_KEY = 'guest_othersUids';
 
 export function AuthProvider({ 
   children,
@@ -60,14 +57,12 @@ export function AuthProvider({
     checkAuth();
   }, [onAuthChange]);
 
-  // Internal migration function (doesn't check authStatus)
   const migrateGuestDataInternal = async () => {
     try {
       const myUid = localStorage.getItem(GUEST_MY_UID_KEY);
       const othersUidsStr = localStorage.getItem(GUEST_OTHERS_UIDS_KEY);
       const othersUids = othersUidsStr ? JSON.parse(othersUidsStr) : [];
 
-      // Send guest data to API
       if (myUid) {
         await fetch('/api/uids/my-uid', {
           method: 'PUT',
@@ -77,7 +72,6 @@ export function AuthProvider({
         });
       }
 
-      // Add other UIDs
       for (const uid of othersUids) {
         await fetch('/api/uids/others-uids', {
           method: 'POST',
@@ -87,7 +81,6 @@ export function AuthProvider({
         });
       }
 
-      // Clear localStorage
       localStorage.removeItem(GUEST_MY_UID_KEY);
       localStorage.removeItem(GUEST_OTHERS_UIDS_KEY);
     } catch (error) {
@@ -96,19 +89,16 @@ export function AuthProvider({
     }
   };
 
-  // Continue as guest
   const continueAsGuest = () => {
     authStatusRef.current = 'GUEST';
     onAuthChange?.('GUEST');
     forceUpdate({});
   };
 
-  // Google login redirection
   const loginWithGoogle = () => {
     window.location.href = '/api/auth/google';
   };
 
-  // Migrate guest data to connected user (public API)
   const migrateGuestData = async () => {
     if (authStatusRef.current !== 'CONNECTED') {
       console.warn('Cannot migrate guest data: user is not connected');
@@ -119,7 +109,6 @@ export function AuthProvider({
     console.log('Guest data migrated successfully');
   };
 
-  // Logout function
   const logout = async () => {
     try {
       await fetch('/api/auth/logout', {

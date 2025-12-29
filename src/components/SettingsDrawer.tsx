@@ -25,6 +25,7 @@ import {
 } from "@mui/icons-material";
 import { useUI, usePlayers, useAuth } from "../contexts";
 import { fetchPlayerData, type PlayerData } from "../api/spaceInvaders";
+import { GUEST_OTHERS_UIDS_KEY } from "../hooks/useUids";
 
 const isValidUUID = (uid: string) => {
   const uuidRegex =
@@ -127,8 +128,6 @@ function SettingsDrawer() {
   const saveOthersUids = async (uids: string[]) => {
     try {
       if (authStatus === "GUEST") {
-        const { GUEST_OTHERS_UIDS_KEY } =
-          await import("../contexts/AuthContext");
         localStorage.setItem(GUEST_OTHERS_UIDS_KEY, JSON.stringify(uids));
         await loadUids();
       } else if (authStatus === "CONNECTED") {

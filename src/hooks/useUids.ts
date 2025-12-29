@@ -1,116 +1,175 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { UidsState, UidsActions } from '../types';
+import { AuthStatus } from '../contexts/types';
+
+// Keys for localStorage (guest mode)
+export const GUEST_MY_UID_KEY = 'guest_my_uid';
+export const GUEST_OTHERS_UIDS_KEY = 'guest_others_uids';
+
+interface UseUidsOptions {
+  authStatus: AuthStatus;
+  showMessage?: (text: string, type: 'success' | 'error') => void;
+  onUidsChanged?: () => Promise<void>;
+}
 
 interface UseUidsReturn extends UidsState, UidsActions {
   loadUids: () => Promise<void>;
-  setUidsList: (uids: string[], others: string[]) => void;
+  resetUids: () => void;
 }
 
-export function useUids(
-  showMessage: (text: string, type: 'success' | 'error') => void,
-  loadPlayers: () => Promise<void>
-): UseUidsReturn {
+export function useUids({
+  authStatus,
+  showMessage,
+  onUidsChanged,
+}: UseUidsOptions): UseUidsReturn {
   const [myUid, setMyUid] = useState('');
   const [othersUids, setOthersUids] = useState<string[]>([]);
   const [newUid, setNewUid] = useState('');
 
+  const resetUids = useCallback(() => {
+    setMyUid('');
+    setOthersUids([]);
+    setNewUid('');
+  }, []);
+
+  useEffect(() => {
+    if (authStatus === null) {
+      resetUids();
+    }
+  }, [authStatus, resetUids]);
+
   const loadUids = useCallback(async () => {
     try {
-      const response = await fetch('/api/uids', {
-        credentials: 'include',
-      });
-      const data = await response.json();
+      if (authStatus === 'GUEST') {
+        const myUidLocal = localStorage.getItem(GUEST_MY_UID_KEY) || '';
+        const othersUidsStr = localStorage.getItem(GUEST_OTHERS_UIDS_KEY);
+        const othersUidsLocal = othersUidsStr ? JSON.parse(othersUidsStr) : [];
 
-      setMyUid(data.myUid);
-      setOthersUids(data.othersUids);
+        setMyUid(myUidLocal);
+        setOthersUids(othersUidsLocal);
+      } else if (authStatus === 'CONNECTED') {
+        const response = await fetch('/api/uids', {
+          credentials: 'include',
+        });
+        const data = await response.json();
+
+        setMyUid(data.myUid);
+        setOthersUids(data.othersUids);
+      }
     } catch (error) {
       console.error('Failed to load UIDs:', error);
-      showMessage('Failed to load UIDs', 'error');
+      showMessage?.('Les UIDs n\'ont pas été chargés', 'error');
     }
-  }, [showMessage]);
+  }, [authStatus, showMessage]);
 
-  const updateMyUid = useCallback(async () => {
+  const updateMyUid = useCallback(async (uidValue?: string) => {
+    const uidToSave = uidValue !== undefined ? uidValue : myUid;
+
     try {
-      const response = await fetch('/api/uids/my-uid', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ uid: myUid }),
-      });
+      if (authStatus === 'GUEST') {
+        localStorage.setItem(GUEST_MY_UID_KEY, uidToSave);
+        if (uidValue !== undefined) {
+          setMyUid(uidToSave);
+        }
+        showMessage?.('UID mis à jour', 'success');
+        await onUidsChanged?.();
+      } else if (authStatus === 'CONNECTED') {
+        const response = await fetch('/api/uids/my-uid', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ uid: uidToSave }),
+        });
 
-      if (response.ok) {
-        showMessage('UID updated successfully', 'success');
-        await loadPlayers();
-      } else {
-        showMessage('Failed to update UID', 'error');
+        if (response.ok) {
+          if (uidValue !== undefined) {
+            setMyUid(uidToSave);
+          }
+          showMessage?.('UID mis à jour', 'success');
+          await onUidsChanged?.();
+        } else {
+          showMessage?.('L\'UID n\'a pas été mis à jour', 'error');
+        }
       }
     } catch (error) {
       console.error('UID update failed:', error);
-      showMessage('Failed to update UID', 'error');
+      showMessage?.('L\'UID n\'a pas été mis à jour', 'error');
     }
-  }, [myUid, showMessage, loadPlayers]);
+  }, [authStatus, myUid, showMessage, onUidsChanged]);
 
   const addOtherUid = useCallback(async () => {
     if (!newUid.trim()) {
-      showMessage('Please enter a valid UID', 'error');
+      showMessage?.('Veuillez entrer un UID valide', 'error');
       return;
     }
 
     try {
-      const response = await fetch('/api/uids/others-uids', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ uid: newUid }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setOthersUids(data.othersUids);
+      if (authStatus === 'GUEST') {
+        const updatedOthersUids = [...othersUids, newUid];
+        localStorage.setItem(GUEST_OTHERS_UIDS_KEY, JSON.stringify(updatedOthersUids));
+        setOthersUids(updatedOthersUids);
         setNewUid('');
-        showMessage('UID added successfully', 'success');
-        await loadPlayers();
-      } else {
-        showMessage('Failed to add UID', 'error');
+        showMessage?.('UID ajouté avec succès', 'success');
+        await onUidsChanged?.();
+      } else if (authStatus === 'CONNECTED') {
+        const response = await fetch('/api/uids/others-uids', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ uid: newUid }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setOthersUids(data.othersUids);
+          setNewUid('');
+          showMessage?.('UID ajouté avec succès', 'success');
+          await onUidsChanged?.();
+        } else {
+          showMessage?.('L\'UID n\'a pas été ajouté', 'error');
+        }
       }
     } catch (error) {
       console.error('UID addition failed:', error);
-      showMessage('Failed to add UID', 'error');
+      showMessage?.('L\'UID n\'a pas été ajouté', 'error');
     }
-  }, [newUid, showMessage, loadPlayers]);
+  }, [authStatus, newUid, othersUids, showMessage, onUidsChanged]);
 
   const removeOtherUid = useCallback(async (uid: string) => {
     try {
-      const response = await fetch(
-        `/api/uids/others-uids/${encodeURIComponent(uid)}`,
-        {
-          method: 'DELETE',
-          credentials: 'include',
-        }
-      );
+      if (authStatus === 'GUEST') {
+        const updatedOthersUids = othersUids.filter((u) => u !== uid);
+        localStorage.setItem(GUEST_OTHERS_UIDS_KEY, JSON.stringify(updatedOthersUids));
+        setOthersUids(updatedOthersUids);
+        showMessage?.('UID supprimé avec succès', 'success');
+        await onUidsChanged?.();
+      } else if (authStatus === 'CONNECTED') {
+        const response = await fetch(
+          `/api/uids/others-uids/${encodeURIComponent(uid)}`,
+          {
+            method: 'DELETE',
+            credentials: 'include',
+          }
+        );
 
-      if (response.ok) {
-        const data = await response.json();
-        setOthersUids(data.othersUids);
-        showMessage('UID removed successfully', 'success');
-        await loadPlayers();
-      } else {
-        showMessage('Failed to remove UID', 'error');
+        if (response.ok) {
+          const data = await response.json();
+          setOthersUids(data.othersUids);
+          showMessage?.('UID supprimé avec succès', 'success');
+          await onUidsChanged?.();
+        } else {
+          showMessage?.('L\'UID n\'a pas pu être supprimé', 'error');
+        }
       }
     } catch (error) {
       console.error('UID removal failed:', error);
-      showMessage('Failed to remove UID', 'error');
+      showMessage?.('L\'UID n\'a pas pu être supprimé', 'error');
     }
-  }, [showMessage, loadPlayers]);
-
-  const setUidsList = useCallback((_uids: string[], _others: string[]) => {
-    // This method can be used to set both lists at once
-    // For now, we'll let the context handle the coordination
-  }, []);
+  }, [authStatus, othersUids, showMessage, onUidsChanged]);
 
   return {
     myUid,
@@ -122,6 +181,6 @@ export function useUids(
     addOtherUid,
     removeOtherUid,
     loadUids,
-    setUidsList,
+    resetUids,
   };
 }
